@@ -1,77 +1,19 @@
 #! /usr/bin/env python
 
 import MDAnalysis
-import agpy
 import numpy
-import math
-from MDAnalysis.analysis.leaflet import LeafletFinder
 from scipy.interpolate import griddata
-
-def determine_leaflets(universe,phosphateSelection):
-    '''
-    From a selection of phosphates, determine which belong to the upper and lower leaflets.
-    
-    Keyword arguments:
-    universe -- an MDAnalysis Universe object
-    phosphateSelection -- a string specifying how to select the phosphate atoms (e.g. "name P1")         
-    '''
-    leaflets = {}
-
-    # calculate the z value of the phosphates defining the bilayer (assumes bilayer is in x and y..)
-    bilayerCentre = universe.selectAtoms(phosphateSelection).centerOfGeometry()[2]
-    
-    # apply the MDAnalysis LeafletFinder graph-based method to determine the two largest groups which
-    #  should correspond to the upper and lower leaflets
-    phosphates = LeafletFinder(universe,phosphateSelection)
-
-    # check to see where the first leaflet lies
-    if phosphates.group(0).centroid()[2] > bilayerCentre:
-        leaflets[1] = phosphates.group(0)
-        leaflets[2] = phosphates.group(1)
-    else:
-        leaflets[2] = phosphates.group(0)
-        leaflets[1] = phosphates.group(1)
-
-    return leaflets
-
-def write_output_file(power2D,fileName,radialBin,radiiFactor):
-    '''
-    Write out a 1D power spectrum to file
-    
-    Keyword arguments:
-    power2D -- a 2D numpy array of floats (NxN) containing the specified power spectrum
-    filename -- string of the file to write the data to (including the PATH)
-    radialBin -- float specifying the width of the radial histogram
-    radiiFactor --  float of the normalisation factor specified in the main code. Takes into account 2pi etc.
-    '''
-    
-    # use the agpy astronomy tools python module to radially average the 2D power array
-    radii,profile = agpy.azimuthalAverage(power2D,returnradii=True,binsize=radialBin)
-    
-    # adjust the radii by the specified factor
-    radii *= radiiFactor
-
-    # open the file stream for writing
-    OUTPUT = open(fileName,"w")
-    
-    # don't write out the zero frequency power    
-    for i in range(1,radii.size):
-        
-        # if the bin size is small, then some bins will contain NaN. Filter these out.
-        if not math.isnan(profile[i]):
-            print >> OUTPUT, "%8.4e %8.4e %8.4e" % (radii[i], profile[i],(profile[i]*(radii[i]**4)))
-    
-    # close the file stream        
-    OUTPUT.close()
+import argparse
+import math
+import matplotlib.pyplot as plt
+#import progressbar
+import time
+from spectralintensity import *
 
 
-import MDAnalysis
-import numpy
-
-# use argparse to read in the options from the shell command line
 parser = argparse.ArgumentParser()
-parser.add_argument("--pdb",default="example-trajectory/popc-1500-CG-phosphates.gro",help="the name of the coordinate file to read in (e.g. foo.pdb)")
-parser.add_argument("--traj",default="example-trajectory/popc-1500-CG-5us-phosphates.xtc",help="the name of the trajectory file to read in (e.g. foo.xtc)")
+parser.add_argument("--pdb",help="the name of the coordinate file to read in (e.g. foo.pdb)")
+parser.add_argument("--traj",help="the name of the trajectory file to read in (e.g. foo.xtc)")
 parser.add_argument("--phosphate",help="the selection text for the phosphate group",default="name PO4")
 parser.add_argument("--output",help="the path of the output file",default="output.dat")
 parser.add_argument("--discard",help="the proportion of the trajectory to discard in the range 0.0-1.0",default=0.0, type=float)
@@ -80,6 +22,7 @@ parser.add_argument("--radialbin", type=float,default=0.5,dest="radialbin",help=
 parser.add_argument("--bins",type=int,default=1,help="divide the trajectory into this many bins (default is to analyse the whole trajectory)")
 parser.add_argument("--plot-fft",dest="plotFFT",action="store_true",help="plot the spectral densities in 2D")
 parser.set_defaults(plotFFT=False)
+
 options = parser.parse_args()
 
 # check the numeric options
@@ -88,26 +31,67 @@ assert options.bins >= 1, "the number of bins must be at least 1"
 assert options.radialbin > 0.0, "the size of the radial averaging bin width must be greater than zero"
 assert options.step > 0.0, "the size of the grid must be greater than zero"
 
+# parse the trajectory name in the standard format
+(systemName, systemSize, systemRun, systemLength, systemStep) = parse_trajectory_name(options.traj)
+
+# make the output path, creating folders if necessary
+path = "dat/"
+for i in [systemName,systemSize,systemRun]:    
+    path += i + "/"
+    create_directory(path)
+    
+if options.bins!=1:
+    path += "bin" +str(options.bins)+"discard"+str(options.discard)+"/"
+    create_directory(path)
+
+# hack for parallel processing
+if systemRun =='c36':
+    options.phosphate = "name P"
+
+# define the output file stem        
+stem=systemName+"-"+systemSize+"-"+systemRun
+
+pdbFile = "../gro/" + stem + "-small.gro"
+
+# path+=stem+"-"+systemLength+"-"+systemStep+"-s"+str(options.step)+"-r"+str(options.radialbin)
+path+=stem+"-"+systemLength+"-"+systemStep
+
+# create a simple progress bar that will be updated on the command line
+# progressBar = progressbar.AnimatedProgressBar(end=100, width=75)
+# progressBar.show_progress()
+# startTime = time.time()
+
 # read in the coordinate and trajectory files
-u = MDAnalysis.Universe(options.pdb,options.traj)
+u = MDAnalysis.Universe(pdbFile,options.traj)
 
-# calculate the frame to start calculating (defaults to the first frame)
+# defaults to zero
 startFrame=int(u.trajectory.numframes*options.discard)
-
-# calculate the number of frames in each bin (defaults to just one bin of the whole trajectory)
+    
 binFrames = int((u.trajectory.numframes*(1.0-options.discard))/options.bins)
 
-# identify the upper and lower leaflets using the MDAnalysis LeafletFinder method
-leaflets = determine_leaflets(u,options.phosphate)
+# progressBar+2
+# progressBar.show_progress()
+# progressPerFrame = 95.0/(u.trajectory.numframes)
 
-# initialise some variables
+# find out the box dimensions
+halfway = u.trajectory.ts.dimensions[0]/2.0
+
+# identify the upper and lower leaflets
+leaflets = determine_leaflets(u,options.phosphate,halfway)
+            
+# progressBar+3
+# progressBar.show_progress()
+
 binCounter = 0        
 firstPass=True
 Power = {}
 
 # loop through the trajectory
 for ts in u.trajectory:
-
+    
+    # progressBar+progressPerFrame
+    # progressBar.show_progress()
+    
     # proceed only if the time is in the correct range
     if ts.frame > startFrame:
 
@@ -209,6 +193,12 @@ if options.bins == 1:
     for i in ['undulation','thickness']:
         Power[i] /= spectralIntensityFrames
         write_output_file(Power[i],path+"-"+i+".dat",options.radialbin,radiiFactor)
-
-
-
+        if options.plotFFT:
+            plt.imshow(Power[i],origin='lower',extent=[min(q),max(q),min(q),max(q)],cmap="Greys")
+            plt.savefig(path+"-power-"+i+"-lin.pdf")
+            plt.imshow(numpy.log(Power[i]),origin='lower',extent=[min(q),max(q),min(q),max(q)],cmap="Greys")
+            plt.savefig(path+"-power-"+i+"-log.pdf")
+        
+# print "\n",spectralIntensityFrames,frameCounter    
+# endTime = time.time()
+# print "Program took %7.1f seconds to run" % (endTime-startTime)
