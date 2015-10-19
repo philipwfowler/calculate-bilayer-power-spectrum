@@ -69,9 +69,9 @@ def write_output_file(power2D,fileName,radialBin,radiiFactor):
 # use argparse to read in the options from the shell command line
 parser = argparse.ArgumentParser()
 parser.add_argument("--pdb",default="example-trajectory/popc-1500-CG-phosphates.gro",help="the name of the coordinate file to read in (e.g. foo.pdb)")
-parser.add_argument("--traj",default="example-trajectory/popc-1500-CG-5us-phosphates.xtc",help="the name of the trajectory file to read in (e.g. foo.xtc)")
+parser.add_argument("--traj",default="example-trajectory/popc-1500-CG-phosphates.xtc",help="the name of the trajectory file to read in (e.g. foo.xtc)")
 parser.add_argument("--phosphate",help="the selection text for the phosphate group",default="name PO4")
-parser.add_argument("--output",help="the stem of the output file",default="output")
+parser.add_argument("--output",help="the stem of the output file",default="output-files/output")
 parser.add_argument("--discard",help="the proportion of the trajectory to discard in the range 0.0-1.0",default=0.0, type=float)
 parser.add_argument("--step", type=float,default=1.0,dest="step",help="the size of the grid in nm")
 parser.add_argument("--radialbin", type=float,default=0.5,dest="radialbin",help="the size of the radial averaging bin width in nm")
