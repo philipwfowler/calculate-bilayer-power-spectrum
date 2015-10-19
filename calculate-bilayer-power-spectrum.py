@@ -4,6 +4,7 @@ import MDAnalysis
 import agpy
 import numpy
 import math
+import argparse
 from MDAnalysis.analysis.leaflet import LeafletFinder
 from scipy.interpolate import griddata
 
@@ -65,21 +66,16 @@ def write_output_file(power2D,fileName,radialBin,radiiFactor):
     OUTPUT.close()
 
 
-import MDAnalysis
-import numpy
-
 # use argparse to read in the options from the shell command line
 parser = argparse.ArgumentParser()
 parser.add_argument("--pdb",default="example-trajectory/popc-1500-CG-phosphates.gro",help="the name of the coordinate file to read in (e.g. foo.pdb)")
 parser.add_argument("--traj",default="example-trajectory/popc-1500-CG-5us-phosphates.xtc",help="the name of the trajectory file to read in (e.g. foo.xtc)")
 parser.add_argument("--phosphate",help="the selection text for the phosphate group",default="name PO4")
-parser.add_argument("--output",help="the path of the output file",default="output.dat")
+parser.add_argument("--output",help="the stem of the output file",default="output")
 parser.add_argument("--discard",help="the proportion of the trajectory to discard in the range 0.0-1.0",default=0.0, type=float)
 parser.add_argument("--step", type=float,default=1.0,dest="step",help="the size of the grid in nm")
 parser.add_argument("--radialbin", type=float,default=0.5,dest="radialbin",help="the size of the radial averaging bin width in nm")
 parser.add_argument("--bins",type=int,default=1,help="divide the trajectory into this many bins (default is to analyse the whole trajectory)")
-parser.add_argument("--plot-fft",dest="plotFFT",action="store_true",help="plot the spectral densities in 2D")
-parser.set_defaults(plotFFT=False)
 options = parser.parse_args()
 
 # check the numeric options
@@ -196,7 +192,7 @@ for ts in u.trajectory:
             # normalise by the number of frames
             for i in ['undulation','thickness']:
                 Power[i] /= spectralIntensityFrames
-                write_output_file(Power[i],path+"-"+i+"-"+bin+".dat",options.radialbin,radiiFactor)
+                write_output_file(Power[i],options.output,options.radialbin,radiiFactor)
             
             # reset the variables
             binCounter+=1
@@ -208,7 +204,7 @@ if options.bins == 1:
     # normalise by the number of frames
     for i in ['undulation','thickness']:
         Power[i] /= spectralIntensityFrames
-        write_output_file(Power[i],path+"-"+i+".dat",options.radialbin,radiiFactor)
+        write_output_file(Power[i],options.output+"-"+i+".dat",options.radialbin,radiiFactor)
 
 
 
