@@ -19,12 +19,12 @@ The other python modules should already be present on your system (argparse and 
 
 Although the code is setup with command line flags so you can analyse your own simulation data, coordinate and trajectory files of the last 20% (i.e. 4-5µs) of the 1500 POPC coarse-grained [MARTINI](http://cgmartini.nl) simulation is included. For simplicity these only contain the phosphate (i.e. PO4) beads as the code uses these to construct the two surfaces of the bilayer. Defaults in the code are setup so that if you simply run the following in a terminal
 
- ./calculate-bilayer-power-spectrum.py 
+    ./calculate-bilayer-power-spectrum.py 
  
  It will use the same options as in the paper and analyse the small 1500 CG POPC simulation. The data files are written to 
  
- ls output-files/
- output-thickness.dat  output-undulation.dat
+    ls output-files/
+    output-thickness.dat  output-undulation.dat
 
 In both cases plotting column 1 against column 2 on a log-log plot will give you the power spectra shown in the upper panel of Figure 2C of the paper. 
 
@@ -32,11 +32,11 @@ In both cases plotting column 1 against column 2 on a log-log plot will give you
 
 The code is also setup with command line options. To see these
 
-  ./calculate-bilayer-power-spectrum.py --help
+    ./calculate-bilayer-power-spectrum.py --help
 
 and you should get
   
-  usage: calculate-bilayer-power-spectrum.py [-h] [--pdb PDB] [--traj TRAJ]
+     usage: calculate-bilayer-power-spectrum.py [-h] [--pdb PDB] [--traj TRAJ]
                                            [--phosphate PHOSPHATE]
                                            [--output OUTPUT]
                                            [--discard DISCARD] [--step STEP]
