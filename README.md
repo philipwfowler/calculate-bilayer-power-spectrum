@@ -1,4 +1,4 @@
-# calculate-bilayer-power-spectrum
+# calculate-bilayer-power-spectrum.py
 
 ## Introduction
 
