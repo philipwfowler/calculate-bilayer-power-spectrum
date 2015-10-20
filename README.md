@@ -17,7 +17,7 @@ The other python modules should already be present on your system (argparse and 
 
 ### Quick start
 
-Although the code is setup with command line flags so you can analyse your own simulation data, coordinate and trajectory files of the last 20% (i.e. 4-5µs) of the 1500 POPC coarse-grained [MARTINI](http://cgmartini.nl) simulation is included. For simplicity these only contain the phosphate (i.e. PO4) beads as the code uses these to construct the two surfaces of the bilayer. Defaults in the code are setup so that if you simply run the following in a terminal
+Although the code is setup with command line flags so you can analyse your own simulation data, coordinate and trajectory files of the last 20% (i.e. 4-5µs) of the 1500 POPC coarse-grained [MARTINI](http://cgmartini.nl) simulation is included in the `example-trajectory/` folder. For simplicity these only contain the phosphate (i.e. PO4) beads as the code uses these to construct the two surfaces of the bilayer. Defaults in the code are setup so that if you simply run the following in a terminal
 
     ./calculate-bilayer-power-spectrum.py 
  
