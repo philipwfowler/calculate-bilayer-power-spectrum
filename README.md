@@ -35,14 +35,14 @@ The code is also setup with command line options. To see these
     ./calculate-bilayer-power-spectrum.py --help
 
 and you should get
-  
-     usage: calculate-bilayer-power-spectrum.py [-h] [--pdb PDB] [--traj TRAJ]
+```
+usage: calculate-bilayer-power-spectrum.py [-h] [--pdb PDB] [--traj TRAJ]
                                            [--phosphate PHOSPHATE]
                                            [--output OUTPUT]
                                            [--discard DISCARD] [--step STEP]
                                            [--radialbin RADIALBIN]
                                            [--bins BINS]
-```
+
 optional arguments:
   -h, --help            show this help message and exit
   --pdb PDB             the name of the coordinate file to read in (e.g.
@@ -63,5 +63,4 @@ optional arguments:
                         (default=0.1nm)
   --bins BINS           divide the trajectory into this many bins (default is
                         to analyse the whole trajectory)
-'''                                       
-
+```
