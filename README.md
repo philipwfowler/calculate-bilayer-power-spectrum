@@ -42,8 +42,7 @@ and you should get
                                            [--discard DISCARD] [--step STEP]
                                            [--radialbin RADIALBIN]
                                            [--bins BINS]
-
-optional arguments:
+    optional arguments:
   -h, --help            show this help message and exit
   --pdb PDB             the name of the coordinate file to read in (e.g.
                         foo.pdb)
@@ -63,3 +62,5 @@ optional arguments:
                         (default=0.1nm)
   --bins BINS           divide the trajectory into this many bins (default is
                         to analyse the whole trajectory)
+                                       
+
