@@ -19,7 +19,7 @@ def determine_leaflets(universe,phosphateSelection):
     leaflets = {}
 
     # calculate the z value of the phosphates defining the bilayer (assumes bilayer is in x and y..)
-    bilayerCentre = universe.selectAtoms(phosphateSelection).centerOfGeometry()[2]
+    bilayerCentre = universe.select_atoms(phosphateSelection).center_of_geometry()[2]
     
     # apply the MDAnalysis LeafletFinder graph-based method to determine the two largest groups which
     #  should correspond to the upper and lower leaflets
@@ -91,10 +91,10 @@ if __name__ == "__main__":
     u = MDAnalysis.Universe(options.pdb,options.traj)
 
     # calculate the frame to start calculating (defaults to the first frame)
-    startFrame=int(u.trajectory.numframes*options.discard)
+    startFrame=int(u.trajectory.n_frames*options.discard)
 
     # calculate the number of frames in each bin (defaults to just one bin of the whole trajectory)
-    binFrames = int((u.trajectory.numframes*(1.0-options.discard))/options.bins)
+    binFrames = int((u.trajectory.n_frames*(1.0-options.discard))/options.bins)
 
     # identify the upper and lower leaflets using the MDAnalysis LeafletFinder method
     leaflets = determine_leaflets(u,options.phosphate)
@@ -160,7 +160,7 @@ if __name__ == "__main__":
                     for i in selectionText:            
                         coord = []
                         for j in leaflets[leaflet].residues:
-                            c = j.selectAtoms(selectionText[i]).centerOfGeometry()
+                            c = j.select_atoms(selectionText[i]).center_of_geometry()
                             coord.append(c/10.) # convert to nm immediately                        
                         coordinates[i,leaflet]=numpy.array(coord)
                     
