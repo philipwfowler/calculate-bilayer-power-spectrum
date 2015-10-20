@@ -13,7 +13,7 @@ You will need to install
 - numpy and scipy
 - [MDAnalysis](http://www.mdanalysis.org)
 
-The other python modules should already be present on your system (argparse and math). 
+On a Mac python, numpy and scipy can be easily installed using either [MacPorts](http://www.macports.org) or [Homebrew](http://brew.sh). The other python modules should already be present on your system (argparse and math). 
 
 ### Quick start
 
