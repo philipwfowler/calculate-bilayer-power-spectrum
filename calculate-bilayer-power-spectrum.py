@@ -5,8 +5,30 @@ import argparse
 import MDAnalysis
 import numpy
 import math
-import agpy
 from scipy.interpolate import griddata    
+
+def largest_groups(atoms):
+    '''
+    From a list of sizes, find out the indices of the two largest groups. These should correspond to the two leaflets of the bilayer.
+    
+    Keyword arguments:
+    atoms -- list of sizes of clusters indentified by LeafletFinder
+    '''
+    largest=0
+    second_largest=0
+
+    for i in atoms:
+        if atoms[i]>largest:
+            largest_index=i
+            largest = atoms[i]
+            
+    for i in atoms:
+        if atoms[i]>second_largest and i!=largest_index:
+            second_largest_index=i
+            second_largest = atoms[i]
+    
+    return (largest_index,second_largest_index)
+
 
 def determine_leaflets(universe,phosphateSelection):
     '''
@@ -21,21 +43,26 @@ def determine_leaflets(universe,phosphateSelection):
     # calculate the z value of the phosphates defining the bilayer (assumes bilayer is in x and y..)
     bilayerCentre = universe.select_atoms(phosphateSelection).center_of_geometry()[2]
     
+    print bilayerCentre
     # apply the MDAnalysis LeafletFinder graph-based method to determine the two largest groups which
     #  should correspond to the upper and lower leaflets
     phosphates = LeafletFinder(universe,phosphateSelection)
-
+    print "moo"
+    
+    # find the two largest groups - required as the first two returned by LeafletFinder, whilst usually are the largest, this is not always so
+    (a,b) = largest_groups(phosphates.sizes())
+    
     # check to see where the first leaflet lies
-    if phosphates.group(0).centroid()[2] > bilayerCentre:
-        leaflets[1] = phosphates.group(0)
-        leaflets[2] = phosphates.group(1)
+    if phosphates.group(a).centroid()[2] > bilayerCentre:
+        leaflets[1] = phosphates.group(a)
+        leaflets[2] = phosphates.group(b)
     else:
-        leaflets[2] = phosphates.group(0)
-        leaflets[1] = phosphates.group(1)
+        leaflets[2] = phosphates.group(a)
+        leaflets[1] = phosphates.group(b)
 
     return leaflets
 
-def write_output_file(power2D,fileName,radialBin,radiiFactor):
+def write_output_file(power2D,fileName,radiiFactor):
     '''
     Write out a 1D power spectrum to file
     
@@ -46,28 +73,36 @@ def write_output_file(power2D,fileName,radialBin,radiiFactor):
     radiiFactor --  float of the normalisation factor specified in the main code. Takes into account 2pi etc.
     '''
     
-    # use the agpy astronomy tools python module to radially average the 2D power array
-    radii,profile = agpy.azimuthalAverage(power2D,returnradii=True,binsize=radialBin)
+    # find out the index of (0,0); this automatically accounts for odd/even behaviour
+    centre = int(power2D.shape[0]/2.)
     
-    # adjust the radii by the specified factor
-    radii *= radiiFactor
+    # generate an array of (i,j) relative to the centre
+    indices = numpy.indices(power2D.shape)-centre
+    
+    # now compute the square distance
+    distance2 = indices[0]**2 + indices[1]**2 
 
-    # open the file stream for writing
-    OUTPUT = open(fileName,"w")
+    r=radiiFactor*numpy.sqrt(distance2)
+    bins=numpy.arange(0.01,10,0.01)    
     
-    # don't write out the zero frequency power    
-    for i in range(1,radii.size):
+    digitized = numpy.digitize(r, bins) 
+
+    # occasionally get an error reported here
+    bc = numpy.array([r[digitized == i].mean() for i in range(1, len(bins))])
+    bm = numpy.array([power2D[digitized == i].mean() for i in range(1, len(bins))])
         
-        # if the bin size is small, then some bins will contain NaN. Filter these out.
-        if not math.isnan(profile[i]):
-            print >> OUTPUT, "%8.4e %8.4e %8.4e" % (radii[i], profile[i],(profile[i]*(radii[i]**4)))
+    bin_centers=bc[numpy.isfinite(bm)]
+    bin_means=bm[numpy.isfinite(bm)]
+        
+    OUTPUT = open(fileName,"w")    
     
-    # close the file stream        
+    for i,j in enumerate(bin_centers):
+        print >> OUTPUT, "%8.4e %8.4e %8.4e" % (bin_centers[i]+0.005, bin_means[i], ((bin_centers[i]**4)*bin_means[i]))
+    
     OUTPUT.close()
 
 
 if __name__ == "__main__":
-    
     
     # use argparse to read in the options from the shell command line
     parser = argparse.ArgumentParser()
@@ -75,16 +110,14 @@ if __name__ == "__main__":
     parser.add_argument("--traj",default="example-trajectory/popc-1500-CG-phosphates.xtc",help="the name of the trajectory file to read in (e.g. foo.xtc)")
     parser.add_argument("--phosphate",help="the selection text for the phosphate group (default is \'name PO4\' for MARTINI CG sims)",default="name PO4")
     parser.add_argument("--output",help="the stem of the output file (default is 'output-files/output')",default="output-files/output")
-    parser.add_argument("--discard",help="the proportion of the trajectory to discard in the range 0.0-1.0 (defaults to analyse the whole trajectory i.e. 0.0)",default=0.0, type=float)
-    parser.add_argument("--step", type=float,default=1.0,dest="step",help="the size of the grid in nm (default=1nm)")
-    parser.add_argument("--radialbin", type=float,default=0.1,dest="radialbin",help="the size of the radial averaging bin width in nm (default=0.1nm)")
+    parser.add_argument("--discard",help="the proportion of the trajectory to discard in the range 0.0-1.0 (defaults to analyse the whole trajectory i.e. 0.0)",default=0.5, type=float)
+    parser.add_argument("--step", type=float,default=0.5,dest="step",help="the size of the grid in nm (default=1nm)")
     parser.add_argument("--bins",type=int,default=1,help="divide the trajectory into this many bins (default is to analyse the whole trajectory)")
     options = parser.parse_args()
 
     # check the numeric options
     assert 0.0 <= options.discard < 1.0, "the proportion of the trajectory to discard must be >= 0.0 and < 1"
     assert options.bins >= 1, "the number of bins must be at least 1"
-    assert options.radialbin > 0.0, "the size of the radial averaging bin width must be greater than zero"
     assert options.step > 0.0, "the size of the grid must be greater than zero"
 
     # read in the coordinate and trajectory files
@@ -172,7 +205,7 @@ if __name__ == "__main__":
                     xy_wrapped = numpy.vstack((xy,xy+[box_x,0],xy-[box_x,0],xy+[0,box_y],xy-[0,box_y],xy+[box_x,box_y],xy-[box_x,box_y],xy+[box_x,-box_y],xy-[box_x,-box_y]))
                     z_wrapped = numpy.hstack((z,z,z,z,z,z,z,z,z))
                 
-                    # cubic interpolate to create a mesh describing the surface                
+                    # cubic interpolate to create a mesh describing the surface    
                     #  although xy_wrapped, z_wrapped cover a 3x3 area, the result only covers the central box
                     mesh['z',leaflet] = griddata(xy_wrapped, z_wrapped, (P, Q), method="cubic")
                 
@@ -195,7 +228,7 @@ if __name__ == "__main__":
                 # normalise by the number of frames
                 for i in ['undulation','thickness']:
                     Power[i] /= spectralIntensityFrames
-                    write_output_file(Power[i],options.output,options.radialbin,radiiFactor)
+                    write_output_file(Power[i],options.output,radiiFactor)
             
                 # reset the variables
                 binCounter+=1
@@ -207,7 +240,7 @@ if __name__ == "__main__":
         # normalise by the number of frames
         for i in ['undulation','thickness']:
             Power[i] /= spectralIntensityFrames
-            write_output_file(Power[i],options.output+"-"+i+".dat",options.radialbin,radiiFactor)
+            write_output_file(Power[i],options.output+"-"+i+".dat",radiiFactor)
 
 
 
