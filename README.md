@@ -11,7 +11,7 @@ This simple python code accompanies the paper "Membrane Stiffness is Modified by
 You will need to install
 - python 2.7.X
 - numpy and scipy
-- [MDAnalysis](http://www.mdanalysis.org)
+- [MDAnalysis](http://www.mdanalysis.org). Version 0.8.1 used for development and testing.
 
 On a Mac python, numpy and scipy can be easily installed using either [MacPorts](http://www.macports.org) or [Homebrew](http://brew.sh). The other python modules should already be present on your system (argparse and math). 
 
@@ -40,7 +40,6 @@ usage: calculate-bilayer-power-spectrum.py [-h] [--pdb PDB] [--traj TRAJ]
                                            [--phosphate PHOSPHATE]
                                            [--output OUTPUT]
                                            [--discard DISCARD] [--step STEP]
-                                           [--radialbin RADIALBIN]
                                            [--bins BINS]
 
 optional arguments:
@@ -57,10 +56,7 @@ optional arguments:
   --discard DISCARD     the proportion of the trajectory to discard in the
                         range 0.0-1.0 (defaults to analyse the whole
                         trajectory i.e. 0.0)
-  --step STEP           the size of the grid in nm (default=1nm)
-  --radialbin RADIALBIN
-                        the size of the radial averaging bin width in nm
-                        (default=0.1nm)
+  --step STEP           the size of the grid in nm (default=0.5nm)
   --bins BINS           divide the trajectory into this many bins (default is
                         to analyse the whole trajectory)
 ```
