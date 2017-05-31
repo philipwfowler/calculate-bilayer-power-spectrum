@@ -41,7 +41,7 @@ def determine_leaflets(universe,phosphateSelection):
     leaflets = {}
 
     # calculate the z value of the phosphates defining the bilayer (assumes bilayer is in x and y..)
-    po4=universe.select_atoms(phosphateSelection)
+    po4=universe.atoms.select_atoms(phosphateSelection)
     bilayerCentre = po4.center_of_geometry()[2]
 
     # apply the MDAnalysis LeafletFinder graph-based method to determine the two largest groups which
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                     for i in selectionText:
                         coord = []
                         for j in leaflets[leaflet].residues:
-                            c = j.select_atoms(selectionText[i]).center_of_geometry()
+                            c = j.atoms.select_atoms(selectionText[i]).center_of_geometry()
                             coord.append(c/10.) # convert to nm immediately
                         coordinates[i,leaflet]=numpy.array(coord)
 
