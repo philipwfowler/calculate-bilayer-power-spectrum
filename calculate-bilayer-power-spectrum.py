@@ -228,7 +228,8 @@ if __name__ == "__main__":
                 # normalise by the number of frames
                 for i in ['undulation','thickness']:
                     Power[i] /= spectralIntensityFrames
-                    write_output_file(Power[i],options.output,radiiFactor)
+                    output_file=options.output+"-"+bin+"-"+i+".dat"
+                    write_output_file(Power[i],output_file,radiiFactor)
 
                 # reset the variables
                 binCounter+=1
