@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This simple python2.7 code accompanies the paper "Membrane Stiffness is Modified by Integral Membrane Proteins" which is published in the journal *Soft Matter*. By making this code public we hope that other researchers will be more easily be able to reproduce our results.
+This simple python3 code accompanies the paper "Membrane Stiffness is Modified by Integral Membrane Proteins" which is published in the journal *Soft Matter*. By making this code public we hope that other researchers will be more easily be able to reproduce our results.
 
 ## How to cite
 
@@ -16,7 +16,7 @@ http://dx.doi.org/10.1039/c6sm01186a
 ### Requirements
 
 You will need to install
-- python 2.7.X
+- python 3.X
 - numpy and scipy
 - [MDAnalysis](http://www.mdanalysis.org). Version 0.8.1 used for development and testing.
 
