@@ -97,7 +97,7 @@ def write_output_file(power2D,fileName,radiiFactor):
     OUTPUT = open(fileName,"w")
 
     for i,j in enumerate(bin_centers):
-        print >> OUTPUT, "%8.4e %8.4e %8.4e" % (bin_centers[i]+0.005, bin_means[i], ((bin_centers[i]**4)*bin_means[i]))
+        OUTPUT.write("%8.4e %8.4e %8.4e" % (bin_centers[i]+0.005, bin_means[i], ((bin_centers[i]**4)*bin_means[i])))
 
     OUTPUT.close()
 
